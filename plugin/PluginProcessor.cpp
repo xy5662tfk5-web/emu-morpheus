@@ -1,6 +1,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <algorithm>
+#include <vector>
+
 MorpheusLabAudioProcessor::MorpheusLabAudioProcessor()
     : juce::AudioProcessor(BusesProperties().withOutput(
           "Output", juce::AudioChannelSet::stereo(), true)) {}
@@ -53,10 +56,104 @@ juce::AudioProcessorEditor* MorpheusLabAudioProcessor::createEditor() {
     return new MorpheusLabAudioProcessorEditor(*this);
 }
 
-void MorpheusLabAudioProcessor::setRomPath(int slot, const juce::String& path) {
-    if (slot >= 0 && slot < static_cast<int>(romPaths.size())) {
-        romPaths[static_cast<size_t>(slot)] = path;
+int MorpheusLabAudioProcessor::getNumPrograms() {
+    return juce::jmax(1, presetNames.size());
+}
+
+void MorpheusLabAudioProcessor::setCurrentProgram(int index) {
+    if (presetNames.isEmpty()) {
+        currentProgram = 0;
+        return;
     }
+    currentProgram = juce::jlimit(0, presetNames.size() - 1, index);
+}
+
+const juce::String MorpheusLabAudioProcessor::getProgramName(int index) {
+    if (index < 0 || index >= presetNames.size())
+        return presetNames.isEmpty() ? "No preset bank loaded" : "Unknown preset";
+    return presetNames[index];
+}
+
+int MorpheusLabAudioProcessor::getPresetCount() const {
+    return presetNames.size();
+}
+
+juce::String MorpheusLabAudioProcessor::getPresetBankStatus() const {
+    return presetBankStatus;
+}
+
+bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
+    presetNames.clear();
+    currentProgram = 0;
+
+    juce::MemoryBlock fileData;
+    const juce::File file(path);
+    if (!file.existsAsFile() || !file.loadFileAsData(fileData)) {
+        presetBankStatus = "Cannot read preset bank";
+        return false;
+    }
+
+    const auto* bytes = static_cast<const juce::uint8*>(fileData.getData());
+    const auto total = fileData.getSize();
+    size_t cursor = 0;
+    int validMessages = 0;
+
+    while (cursor < total) {
+        while (cursor < total && bytes[cursor] != 0xF0)
+            ++cursor;
+        if (cursor >= total)
+            break;
+
+        const size_t start = cursor++;
+        while (cursor < total && bytes[cursor] != 0xF7)
+            ++cursor;
+        if (cursor >= total)
+            break;
+
+        const size_t messageLength = cursor - start + 1;
+        const auto* msg = bytes + start;
+        ++cursor;
+
+        // Morpheus preset-data message: F0 18 0C device 01 version ...
+        if (messageLength < 32 || msg[1] != 0x18 || msg[2] != 0x0C
+            || msg[4] != 0x01 || msg[5] != 0x01)
+            continue;
+
+        juce::String name;
+        for (size_t offset = 8; offset + 1 < 32; offset += 2) {
+            const auto character = msg[offset];
+            const auto highByte = msg[offset + 1];
+            if (character == 0 || character < 32 || character > 126)
+                break;
+            if (highByte != 0)
+                break;
+            name += juce::String::charToString(static_cast<juce::juce_wchar>(character));
+        }
+
+        name = name.trim();
+        if (name.isEmpty())
+            name = "Preset " + juce::String(validMessages + 1);
+
+        presetNames.add(name);
+        ++validMessages;
+    }
+
+    if (validMessages == 0) {
+        presetBankStatus = "No valid Morpheus preset messages found";
+        return false;
+    }
+
+    presetBankStatus = "Loaded " + juce::String(validMessages) + " presets";
+    return true;
+}
+
+void MorpheusLabAudioProcessor::setRomPath(int slot, const juce::String& path) {
+    if (slot < 0 || slot >= static_cast<int>(romPaths.size()))
+        return;
+
+    romPaths[static_cast<size_t>(slot)] = path;
+    if (slot == 5)
+        parsePresetBank(path);
 }
 
 juce::String MorpheusLabAudioProcessor::getRomPath(int slot) const {
@@ -67,13 +164,13 @@ juce::String MorpheusLabAudioProcessor::getRomPath(int slot) const {
 
 void MorpheusLabAudioProcessor::getStateInformation(juce::MemoryBlock& destinationData) {
     juce::XmlElement state("MorpheusLabState");
+    state.setAttribute("currentProgram", currentProgram);
     for (size_t i = 0; i < romPaths.size(); ++i) {
         auto* slot = state.createNewChildElement("RomSlot");
         slot->setAttribute("index", static_cast<int>(i));
         slot->setAttribute("path", romPaths[i]);
     }
-    if (auto xml = state.toString(); xml.isNotEmpty())
-        copyXmlToBinary(state, destinationData);
+    copyXmlToBinary(state, destinationData);
 }
 
 void MorpheusLabAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
@@ -81,9 +178,14 @@ void MorpheusLabAudioProcessor::setStateInformation(const void* data, int sizeIn
         if (state->hasTagName("MorpheusLabState")) {
             forEachXmlChildElementWithTagName(*state, slot, "RomSlot") {
                 const int index = slot->getIntAttribute("index", -1);
-                if (index >= 0 && index < static_cast<int>(romPaths.size()))
-                    romPaths[static_cast<size_t>(index)] = slot->getStringAttribute("path");
+                if (index >= 0 && index < static_cast<int>(romPaths.size())) {
+                    const auto path = slot->getStringAttribute("path");
+                    romPaths[static_cast<size_t>(index)] = path;
+                    if (index == 5 && path.isNotEmpty())
+                        parsePresetBank(path);
+                }
             }
+            setCurrentProgram(state->getIntAttribute("currentProgram", 0));
         }
     }
 }

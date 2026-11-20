@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include <array>
+#include <atomic>
 
 class MorpheusLabAudioProcessor final : public juce::AudioProcessor {
 public:
@@ -22,7 +23,7 @@ public:
     double getTailLengthSeconds() const override { return 0.0; }
 
     int getNumPrograms() override;
-    int getCurrentProgram() override { return currentProgram; }
+    int getCurrentProgram() override { return currentProgram.load(); }
     void setCurrentProgram(int index) override;
     const juce::String getProgramName(int index) override;
     void changeProgramName(int, const juce::String&) override {}
@@ -42,7 +43,7 @@ private:
     double phase = 0.0;
     float amplitude = 0.12f;
     int activeNote = -1;
-    int currentProgram = 0;
+    std::atomic<int> currentProgram { 0 };
     std::array<juce::String, 6> romPaths {};
     juce::StringArray presetNames;
     juce::String presetBankStatus { "No preset bank loaded" };

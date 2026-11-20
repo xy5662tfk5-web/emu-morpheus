@@ -75,6 +75,8 @@ if(APPLE)
         plugin/PluginProcessor.cpp
         plugin/PluginEditor.cpp
     )
+    juce_generate_juce_header(MorpheusLab)
+
     target_compile_definitions(MorpheusLab PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0

@@ -1,4 +1,4 @@
-name: Intel Mac scaffold build
+name: Intel Mac AU shell build
 
 on:
   push:
@@ -23,8 +23,15 @@ jobs:
           -DCMAKE_OSX_ARCHITECTURES=x86_64
           -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
 
-      - name: Build
+      - name: Build core, tests, and AU plugin
         run: cmake --build build --parallel 2
 
       - name: Run scaffold tests
         run: ctest --test-dir build --output-on-failure
+
+      - name: Upload AU component
+        uses: actions/upload-artifact@v4
+        with:
+          name: Morpheus-Lab-AU-Intel
+          path: build/MorpheusLab_artefacts/Release/AU/Morpheus Lab.component
+          if-no-files-found: error

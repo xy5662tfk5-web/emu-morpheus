@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(emu_morpheus VERSION 0.2.0 LANGUAGES CXX)
+project(emu_morpheus VERSION 0.3.0 LANGUAGES CXX)
 
 include(CTest)
 include(FetchContent)
@@ -9,8 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Moira is an MIT-licensed Motorola 68k CPU core. Pin an exact upstream
-# revision so builds are reproducible. Only its CPU library is added; the
-# upstream test runner and third-party test dependencies are not included.
+# revision so builds are reproducible.
 FetchContent_Declare(
     moira
     GIT_REPOSITORY https://github.com/dirkwhoffmann/Moira.git
@@ -23,8 +22,6 @@ if(NOT moira_POPULATED)
 endif()
 add_subdirectory(${moira_SOURCE_DIR}/Moira ${moira_BINARY_DIR}/Moira)
 
-# Enable Moira's bus-delegate API so the Morpheus memory map can be supplied
-# by our machine implementation instead of being compiled into the CPU core.
 target_compile_definitions(moira PUBLIC MOIRA_VIRTUAL_API=1)
 target_include_directories(moira PUBLIC ${moira_SOURCE_DIR}/Moira)
 
@@ -46,4 +43,47 @@ if(BUILD_TESTING)
     add_executable(morpheus_core_tests tests/CoreTests.cpp)
     target_link_libraries(morpheus_core_tests PRIVATE morpheus_core)
     add_test(NAME morpheus_core_tests COMMAND morpheus_core_tests)
+endif()
+
+# JUCE is used only for the host-facing AU shell. It does not emulate E-MU
+# hardware; the current sound is an explicitly labelled MIDI test oscillator.
+if(APPLE)
+    FetchContent_Declare(
+        JUCE
+        GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+        GIT_TAG 8.0.6
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(JUCE)
+
+    juce_add_plugin(MorpheusLab
+        COMPANY_NAME "Open Research"
+        BUNDLE_ID "org.openresearch.morpheuslab"
+        PLUGIN_MANUFACTURER_CODE ORes
+        PLUGIN_CODE Mrph
+        PRODUCT_NAME "Morpheus Lab"
+        FORMATS AU
+        IS_SYNTH TRUE
+        NEEDS_MIDI_INPUT TRUE
+        NEEDS_MIDI_OUTPUT FALSE
+        IS_MIDI_EFFECT FALSE
+        EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+        COPY_PLUGIN_AFTER_BUILD FALSE
+    )
+
+    target_sources(MorpheusLab PRIVATE
+        plugin/PluginProcessor.cpp
+        plugin/PluginEditor.cpp
+    )
+    target_compile_definitions(MorpheusLab PUBLIC
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+    )
+    target_link_libraries(MorpheusLab PRIVATE
+        morpheus_core
+        juce::juce_audio_utils
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags
+    )
 endif()

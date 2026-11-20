@@ -1,0 +1,30 @@
+name: Intel Mac scaffold build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-intel-macos:
+    runs-on: macos-15-intel
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure x86_64 build (Monterey deployment target)
+        run: >-
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_OSX_ARCHITECTURES=x86_64
+          -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+
+      - name: Build
+        run: cmake --build build --parallel 2
+
+      - name: Run scaffold tests
+        run: ctest --test-dir build --output-on-failure

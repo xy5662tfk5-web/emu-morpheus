@@ -21,19 +21,13 @@ bool MorpheusLabAudioProcessor::isBusesLayoutSupported(const BusesLayout& layout
 void MorpheusLabAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
-
-    // This first shell deliberately uses a simple oscillator so the AU can be
-    // verified in a DAW before any proprietary Morpheus firmware or ROM exists.
     for (const auto metadata : midiMessages) {
         const auto message = metadata.getMessage();
-        if (message.isNoteOn()) {
-            activeNote = message.getNoteNumber();
-        } else if (message.isNoteOff()
-                   && (activeNote == message.getNoteNumber() || message.isAllNotesOff())) {
+        if (message.isNoteOn()) activeNote = message.getNoteNumber();
+        else if (message.isNoteOff()
+                 && (activeNote == message.getNoteNumber() || message.isAllNotesOff()))
             activeNote = -1;
-        } else if (message.isAllNotesOff() || message.isAllSoundOff()) {
-            activeNote = -1;
-        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff()) activeNote = -1;
     }
     midiMessages.clear();
 
@@ -46,12 +40,10 @@ void MorpheusLabAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
     for (int sample = 0; sample < sampleCount; ++sample) {
         const float value = activeNote >= 0
-            ? amplitude * static_cast<float>(std::sin(phase))
-            : 0.0f;
+            ? amplitude * static_cast<float>(std::sin(phase)) : 0.0f;
         phase += increment;
         if (phase >= juce::MathConstants<double>::twoPi)
             phase -= juce::MathConstants<double>::twoPi;
-
         for (int channel = 0; channel < channelCount; ++channel)
             buffer.setSample(channel, sample, value);
     }
@@ -61,16 +53,38 @@ juce::AudioProcessorEditor* MorpheusLabAudioProcessor::createEditor() {
     return new MorpheusLabAudioProcessorEditor(*this);
 }
 
+void MorpheusLabAudioProcessor::setRomPath(int slot, const juce::String& path) {
+    if (slot >= 0 && slot < static_cast<int>(romPaths.size())) {
+        romPaths[static_cast<size_t>(slot)] = path;
+        setLatencySamples(getLatencySamples());
+    }
+}
+
+juce::String MorpheusLabAudioProcessor::getRomPath(int slot) const {
+    if (slot < 0 || slot >= static_cast<int>(romPaths.size()))
+        return {};
+    return romPaths[static_cast<size_t>(slot)];
+}
+
 void MorpheusLabAudioProcessor::getStateInformation(juce::MemoryBlock& destinationData) {
-    const juce::ValueTree state("MorpheusLabState");
-    juce::MemoryOutputStream stream(destinationData, false);
-    state.writeToStream(stream);
+    juce::XmlElement state("MorpheusLabState");
+    for (size_t i = 0; i < romPaths.size(); ++i) {
+        auto* slot = state.createNewChildElement("RomSlot");
+        slot->setAttribute("index", static_cast<int>(i));
+        slot->setAttribute("path", romPaths[i]);
+    }
+    if (auto xml = state.toString(); xml.isNotEmpty())
+        copyXmlToBinary(state, destinationData);
 }
 
-void MorpheusLabAudioProcessor::setStateInformation(const void*, int) {
-    // No user parameters are stored in this initial test shell.
-}
-
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
-    return new MorpheusLabAudioProcessor();
+void MorpheusLabAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
+    if (auto state = getXmlFromBinary(data, sizeInBytes)) {
+        if (state->hasTagName("MorpheusLabState")) {
+            forEachXmlChildElementWithTagName(*state, slot, "RomSlot") {
+                const int index = slot->getIntAttribute("index", -1);
+                if (index >= 0 && index < static_cast<int>(romPaths.size()))
+                    romPaths[static_cast<size_t>(index)] = slot->getStringAttribute("path");
+            }
+        }
+    }
 }

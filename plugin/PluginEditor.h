@@ -10,7 +10,15 @@ public:
     void resized() override;
 
 private:
-    juce::Label title;
-    juce::Label status;
+    static constexpr int slotCount = 6;
+    void chooseFileForSlot(int slot);
+    void refreshFileStatus();
+
+    MorpheusLabAudioProcessor& processor;
+    juce::Label title, subtitle, footer;
+    juce::OwnedArray<juce::Label> slotNames, slotDescriptions, slotPaths, slotStatuses;
+    juce::OwnedArray<juce::TextButton> slotButtons;
+    std::unique_ptr<juce::FileChooser> fileChooser;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MorpheusLabAudioProcessorEditor)
 };

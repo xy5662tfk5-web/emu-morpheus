@@ -1,6 +1,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <array>
 
 class MorpheusLabAudioProcessor final : public juce::AudioProcessor {
 public:
@@ -29,11 +30,15 @@ public:
     void getStateInformation(juce::MemoryBlock& destinationData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    void setRomPath(int slot, const juce::String& path);
+    juce::String getRomPath(int slot) const;
+
 private:
     double sampleRateHz = 44100.0;
     double phase = 0.0;
     float amplitude = 0.12f;
     int activeNote = -1;
+    std::array<juce::String, 6> romPaths {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MorpheusLabAudioProcessor)
 };

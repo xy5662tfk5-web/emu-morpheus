@@ -29,9 +29,15 @@ jobs:
       - name: Run scaffold tests
         run: ctest --test-dir build --output-on-failure
 
-      - name: Upload AU component
+      - name: Package AU component with its .component bundle folder
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "build/MorpheusLab_artefacts/Release/AU/Morpheus Lab.component" \
+            "Morpheus-Lab-AU-Intel.zip"
+
+      - name: Upload installable AU package
         uses: actions/upload-artifact@v4
         with:
           name: Morpheus-Lab-AU-Intel
-          path: build/MorpheusLab_artefacts/Release/AU/Morpheus Lab.component
+          path: Morpheus-Lab-AU-Intel.zip
           if-no-files-found: error

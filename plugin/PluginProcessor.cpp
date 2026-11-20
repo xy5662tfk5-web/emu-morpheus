@@ -2,7 +2,6 @@
 #include "PluginEditor.h"
 #include "morpheus/SysExPresetBank.h"
 
-
 MorpheusLabAudioProcessor::MorpheusLabAudioProcessor()
     : juce::AudioProcessor(BusesProperties().withOutput(
           "Output", juce::AudioChannelSet::stereo(), true)) {}
@@ -25,11 +24,16 @@ void MorpheusLabAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     juce::ScopedNoDenormals noDenormals;
     for (const auto metadata : midiMessages) {
         const auto message = metadata.getMessage();
-        if (message.isNoteOn()) activeNote = message.getNoteNumber();
-        else if (message.isNoteOff()
-                 && (activeNote == message.getNoteNumber() || message.isAllNotesOff()))
+        if (message.isProgramChange()) {
+            setCurrentProgram(message.getProgramChangeNumber());
+        } else if (message.isNoteOn()) {
+            activeNote = message.getNoteNumber();
+        } else if (message.isNoteOff()
+                   && (activeNote == message.getNoteNumber() || message.isAllNotesOff())) {
             activeNote = -1;
-        else if (message.isAllNotesOff() || message.isAllSoundOff()) activeNote = -1;
+        } else if (message.isAllNotesOff() || message.isAllSoundOff()) {
+            activeNote = -1;
+        }
     }
     midiMessages.clear();
 
@@ -61,10 +65,10 @@ int MorpheusLabAudioProcessor::getNumPrograms() {
 
 void MorpheusLabAudioProcessor::setCurrentProgram(int index) {
     if (presetNames.isEmpty()) {
-        currentProgram = 0;
+        currentProgram.store(0);
         return;
     }
-    currentProgram = juce::jlimit(0, presetNames.size() - 1, index);
+    currentProgram.store(juce::jlimit(0, presetNames.size() - 1, index));
 }
 
 const juce::String MorpheusLabAudioProcessor::getProgramName(int index) {
@@ -83,7 +87,7 @@ juce::String MorpheusLabAudioProcessor::getPresetBankStatus() const {
 
 bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
     presetNames.clear();
-    currentProgram = 0;
+    currentProgram.store(0);
 
     juce::MemoryBlock fileData;
     const juce::File file(path);
@@ -133,7 +137,7 @@ juce::String MorpheusLabAudioProcessor::getRomPath(int slot) const {
 
 void MorpheusLabAudioProcessor::getStateInformation(juce::MemoryBlock& destinationData) {
     juce::XmlElement state("MorpheusLabState");
-    state.setAttribute("currentProgram", currentProgram);
+    state.setAttribute("currentProgram", currentProgram.load());
     for (size_t i = 0; i < romPaths.size(); ++i) {
         auto* slot = state.createNewChildElement("RomSlot");
         slot->setAttribute("index", static_cast<int>(i));

@@ -27,6 +27,7 @@ target_include_directories(moira PUBLIC ${moira_SOURCE_DIR}/Moira)
 
 add_library(morpheus_core
     src/core/MorpheusCore.cpp
+    src/core/SysExPresetBank.cpp
     src/cpu/Cpu68020.cpp
 )
 target_include_directories(morpheus_core PUBLIC include)
@@ -43,6 +44,10 @@ if(BUILD_TESTING)
     add_executable(morpheus_core_tests tests/CoreTests.cpp)
     target_link_libraries(morpheus_core_tests PRIVATE morpheus_core)
     add_test(NAME morpheus_core_tests COMMAND morpheus_core_tests)
+
+    add_executable(morpheus_sysex_tests tests/SysExPresetBankTests.cpp)
+    target_link_libraries(morpheus_sysex_tests PRIVATE morpheus_core)
+    add_test(NAME morpheus_sysex_tests COMMAND morpheus_sysex_tests)
 endif()
 
 # JUCE is used only for the host-facing AU shell. It does not emulate E-MU

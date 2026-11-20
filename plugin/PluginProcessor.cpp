@@ -56,7 +56,6 @@ juce::AudioProcessorEditor* MorpheusLabAudioProcessor::createEditor() {
 void MorpheusLabAudioProcessor::setRomPath(int slot, const juce::String& path) {
     if (slot >= 0 && slot < static_cast<int>(romPaths.size())) {
         romPaths[static_cast<size_t>(slot)] = path;
-        setLatencySamples(getLatencySamples());
     }
 }
 
@@ -87,4 +86,8 @@ void MorpheusLabAudioProcessor::setStateInformation(const void* data, int sizeIn
             }
         }
     }
+}
+
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
+    return new MorpheusLabAudioProcessor();
 }

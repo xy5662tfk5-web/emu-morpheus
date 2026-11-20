@@ -61,6 +61,13 @@ int main() {
     assert(bad.presets.empty());
     assert(bad.invalidMessages == 1);
 
+    auto invalidNumber = makePreset(5, "Bad number");
+    invalidNumber[6] = 0x80;
+    auto badNumber = morpheus::parsePresetBankSysEx(
+        invalidNumber.data(), invalidNumber.size());
+    assert(badNumber.presets.empty());
+    assert(badNumber.invalidMessages == 1);
+
     auto foreign = makePreset(4, "Proteus");
     foreign[2] = 0x04;
     auto other = morpheus::parsePresetBankSysEx(foreign.data(), foreign.size());

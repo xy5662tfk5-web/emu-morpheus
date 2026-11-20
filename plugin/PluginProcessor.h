@@ -36,7 +36,7 @@ public:
     juce::String getRomPath(int slot) const;
     int getPresetCount() const;
     int getProgramNumber(int index) const;
-    juce::String getPresetBankStatus() const
+    juce::String getPresetBankStatus() const;
 
 private:
     bool parsePresetBank(const juce::String& path);

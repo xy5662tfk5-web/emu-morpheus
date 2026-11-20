@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include <array>
 #include <atomic>
+#include <vector>
 
 class MorpheusLabAudioProcessor final : public juce::AudioProcessor {
 public:
@@ -34,7 +35,8 @@ public:
     void setRomPath(int slot, const juce::String& path);
     juce::String getRomPath(int slot) const;
     int getPresetCount() const;
-    juce::String getPresetBankStatus() const;
+    int getProgramNumber(int index) const;
+    juce::String getPresetBankStatus() const
 
 private:
     bool parsePresetBank(const juce::String& path);
@@ -46,6 +48,7 @@ private:
     std::atomic<int> currentProgram { 0 };
     std::array<juce::String, 6> romPaths {};
     juce::StringArray presetNames;
+    std::vector<int> presetNumbers;
     juce::String presetBankStatus { "No preset bank loaded" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MorpheusLabAudioProcessor)

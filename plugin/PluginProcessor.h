@@ -21,10 +21,10 @@ public:
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 0.0; }
 
-    int getNumPrograms() override { return 1; }
-    int getCurrentProgram() override { return 0; }
-    void setCurrentProgram(int) override {}
-    const juce::String getProgramName(int) override { return "MIDI test tone"; }
+    int getNumPrograms() override;
+    int getCurrentProgram() override { return currentProgram; }
+    void setCurrentProgram(int index) override;
+    const juce::String getProgramName(int index) override;
     void changeProgramName(int, const juce::String&) override {}
 
     void getStateInformation(juce::MemoryBlock& destinationData) override;
@@ -32,13 +32,20 @@ public:
 
     void setRomPath(int slot, const juce::String& path);
     juce::String getRomPath(int slot) const;
+    int getPresetCount() const;
+    juce::String getPresetBankStatus() const;
 
 private:
+    bool parsePresetBank(const juce::String& path);
+
     double sampleRateHz = 44100.0;
     double phase = 0.0;
     float amplitude = 0.12f;
     int activeNote = -1;
+    int currentProgram = 0;
     std::array<juce::String, 6> romPaths {};
+    juce::StringArray presetNames;
+    juce::String presetBankStatus { "No preset bank loaded" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MorpheusLabAudioProcessor)
 };

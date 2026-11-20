@@ -2,7 +2,7 @@
 
 An open research project aimed at an **authentic software emulation** of the E-MU Morpheus, with an Intel macOS audio-plugin target as a long-term deliverable.
 
-> **Status: research scaffold only.** This repository does not yet emulate the Morpheus, produce Morpheus audio, or contain E-MU firmware/sound ROMs. A working host/plugin shell is not evidence of an authentic sound engine.
+> **Status: early research scaffold.** The Motorola 68020 CPU core is integrated and has passed a reset-vector/NOP smoke test in Intel macOS CI. The project does not yet boot Morpheus firmware, emulate its proprietary sound ASICs, or produce Morpheus audio.
 
 ## Target
 
@@ -15,14 +15,14 @@ An open research project aimed at an **authentic software emulation** of the E-M
 
 1. Establish a portable C++ research core and automated tests.
 2. Document the hardware and firmware/ROM formats from lawful sources.
-3. Integrate and validate a Motorola 68020 CPU core.
-4. Research the Morpheus-specific ASICs and audio data path.
-5. Implement and validate Z-Plane filter structures and modulation.
+3. Integrate and validate a Motorola 68020 CPU core. **Initial integration complete; only a minimal smoke test exists.**
+4. Research the Morpheus-specific ASICs, memory map, and audio data path.
+5. Implement and validate the sample playback, voice architecture, and Z-Plane processing.
 6. Add the JUCE audio-plugin host layer after the sound engine has a testable API.
 
 ## Important distinction
 
-The Morpheus is not simply a 68020 plus an ADSP-2115. The proprietary E-MU sound-generation hardware and its control/data path are essential. A generic biquad morphing filter or a Proteus VX sample player is **not** an authentic Morpheus implementation.
+The Morpheus is not simply a 68020 plus an ADSP-2115. Contemporary hardware reporting identifies five custom AMI ASICs on the main board; the ADSP-2115 on a small daughterboard is reported to produce the digital effects. The proprietary E-MU sound-generation hardware and its control/data path are essential. A generic biquad morphing filter or a Proteus VX sample player is **not** an authentic Morpheus implementation.
 
 ## Build the current scaffold
 
@@ -32,10 +32,11 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-The current tests verify only the research-core scaffolding and must not be interpreted as hardware-emulation tests.
+The current tests verify the CPU adapter's reset-vector/NOP path and scaffold interfaces only. They are not firmware-boot, sound-engine, or hardware-conformance tests.
 
 ## Third-party components
 
-Potential CPU-core research candidate: [Moira](https://github.com/dirkwhoffmann/Moira), an independently maintained Motorola 68k emulator under the MIT license. It has not yet been vendored or integrated; its 68020 configuration, API, timing behavior, and licensing notices must be reviewed first.
+- [Moira](https://github.com/dirkwhoffmann/Moira): integrated from upstream commit `ce28239b0507ebfe1bf2ad2b9c9252dc2f2cc031`, configured for Motorola 68020. Moira is MIT-licensed; see its upstream license.
+- [Hardware research notes](docs/HARDWARE_RESEARCH.md): documented facts, source links, and unresolved reverse-engineering questions.
 
 No proprietary E-MU ROM, firmware, factory preset bank, or service data is included.

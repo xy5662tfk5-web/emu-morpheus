@@ -8,11 +8,25 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     title.setFont(juce::Font(juce::FontOptions(22.0f, juce::Font::bold)));
     addAndMakeVisible(title);
 
-    subtitle.setText("ROM MANAGER  |  FILE SELECTION & BASIC VALIDATION",
+    subtitle.setText("SYSEX PRESET BANK READER  |  ROM FILE MANAGER",
                      juce::dontSendNotification);
     subtitle.setColour(juce::Label::textColourId, juce::Colour(0xff9aa9bc));
     subtitle.setFont(juce::Font(juce::FontOptions(11.0f)));
     addAndMakeVisible(subtitle);
+
+    presetLabel.setText("PRESET", juce::dontSendNotification);
+    presetLabel.setColour(juce::Label::textColourId, juce::Colour(0xffd8e1ed));
+    presetLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
+    addAndMakeVisible(presetLabel);
+
+    presetSelector.setTextWhenNothingSelected("Choose a preset bank (.syx)");
+    presetSelector.onChange = [this] {
+        const int selectedId = presetSelector.getSelectedId();
+        if (selectedId > 0)
+            processor.setCurrentProgram(selectedId - 1);
+        footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
+    };
+    addAndMakeVisible(presetSelector);
 
     const juce::StringArray names {
         "CPU Firmware", "Sound ROM 1", "Sound ROM 2", "Sound ROM 3",
@@ -58,14 +72,14 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
         slotButtons.add(button);
     }
 
-    footer.setText("Files are selected and checked for existence only. ROM loading / emulation is not implemented yet.",
-                   juce::dontSendNotification);
+    footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
     footer.setColour(juce::Label::textColourId, juce::Colour(0xffffc477));
     footer.setFont(juce::Font(juce::FontOptions(10.5f)));
     addAndMakeVisible(footer);
 
     refreshFileStatus();
-    setSize(680, 510);
+    refreshPresetList();
+    setSize(680, 530);
 }
 
 void MorpheusLabAudioProcessorEditor::chooseFileForSlot(int slot) {
@@ -86,6 +100,8 @@ void MorpheusLabAudioProcessorEditor::chooseFileForSlot(int slot) {
             if (selected.existsAsFile()) {
                 safeThis->processor.setRomPath(slot, selected.getFullPathName());
                 safeThis->refreshFileStatus();
+                if (slot == 5)
+                    safeThis->refreshPresetList();
             }
         });
 }
@@ -116,26 +132,44 @@ void MorpheusLabAudioProcessorEditor::refreshFileStatus() {
     }
 }
 
+void MorpheusLabAudioProcessorEditor::refreshPresetList() {
+    presetSelector.clear(juce::dontSendNotification);
+    const int count = processor.getPresetCount();
+    for (int i = 0; i < count; ++i)
+        presetSelector.addItem(processor.getProgramName(i), i + 1);
+
+    if (count > 0) {
+        presetSelector.setSelectedId(processor.getCurrentProgram() + 1,
+                                      juce::dontSendNotification);
+        footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
+    } else {
+        presetSelector.setText("No valid presets loaded", juce::dontSendNotification);
+        footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
+    }
+}
+
 void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff171b22));
     g.setColour(juce::Colour(0xff596779));
     g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(8.0f), 10.0f, 1.0f);
     g.setColour(juce::Colour(0xff252e3a));
-    g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 92.0f,
-        static_cast<float>(getWidth() - 36), 365.0f), 8.0f, 1.0f);
+    g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 118.0f,
+        static_cast<float>(getWidth() - 36), 350.0f), 8.0f, 1.0f);
 }
 
 void MorpheusLabAudioProcessorEditor::resized() {
-    title.setBounds(24, 18, getWidth() - 48, 34);
-    subtitle.setBounds(25, 53, getWidth() - 50, 22);
+    title.setBounds(24, 16, getWidth() - 48, 34);
+    subtitle.setBounds(25, 51, getWidth() - 50, 20);
+    presetLabel.setBounds(28, 78, 70, 24);
+    presetSelector.setBounds(100, 76, getWidth() - 128, 28);
 
     for (int i = 0; i < slotCount; ++i) {
-        const int y = 108 + i * 56;
+        const int y = 132 + i * 53;
         slotNames[i]->setBounds(30, y, 145, 20);
-        slotDescriptions[i]->setBounds(30, y + 20, 145, 18);
+        slotDescriptions[i]->setBounds(30, y + 20, 145, 17);
         slotPaths[i]->setBounds(185, y + 2, getWidth() - 370, 24);
         slotStatuses[i]->setBounds(getWidth() - 178, y + 2, 112, 24);
         slotButtons[i]->setBounds(getWidth() - 94, y, 72, 28);
     }
-    footer.setBounds(25, 466, getWidth() - 50, 25);
+    footer.setBounds(25, 482, getWidth() - 50, 25);
 }

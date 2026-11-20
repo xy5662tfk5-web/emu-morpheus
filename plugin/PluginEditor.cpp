@@ -172,7 +172,7 @@ void MorpheusLabAudioProcessorEditor::refreshPresetList() {
         presetSelector.addItem(processor.getProgramName(i), i + 1);
 
     if (count > 0) {
-        presetSelector.setTextWhenNothingSelected({});
+        presetSelector.setTextWhenNothingSelected(juce::String());
         presetSelector.setSelectedId(processor.getCurrentProgram() + 1,
                                      juce::dontSendNotification);
     } else {
@@ -187,7 +187,7 @@ void MorpheusLabAudioProcessorEditor::refreshDisplay() {
     const int index = processor.getCurrentProgram();
     const bool hasPresets = count > 0;
     lcdNumber.setText(hasPresets
-        ? "PRESET " + juce::String(index + 1).paddedLeft('0', 3)
+        ? "PRESET " + juce::String(processor.getProgramNumber(index)).paddedLeft('0', 3)
         : "PRESET ---", juce::dontSendNotification);
     lcdName.setText(hasPresets ? processor.getProgramName(index)
                                : "NO PRESET BANK", juce::dontSendNotification);

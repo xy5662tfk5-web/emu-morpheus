@@ -143,7 +143,7 @@ void MorpheusLabAudioProcessorEditor::refreshPresetList() {
                                       juce::dontSendNotification);
         footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
     } else {
-        presetSelector.setText("No valid presets loaded", juce::dontSendNotification);
+        presetSelector.setTextWhenNothingSelected("No valid presets loaded");
         footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
     }
 }

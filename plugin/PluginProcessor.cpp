@@ -119,27 +119,34 @@ bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
             || msg[4] != 0x01 || msg[5] != 0x01)
             continue;
 
-        // The Morpheus Operation Manual (SysEx reference, pp. 228-231)
-        // defines the preset name as 12 consecutive ASCII characters.
-        // Some archived dumps/tools expose a zero-padded two-byte variant,
-        // so accept that representation only as a fallback.
+        // Preset parameters are 14-bit values stored LSB-MSB. The first
+        // twelve parameter values encode the 12-character ASCII preset name.
+        // Validate the complete fixed-size dump and its documented checksum
+        // before trusting the name or exposing this entry in the program list.
+        constexpr size_t expectedMessageLength = 566;
+        constexpr size_t checksumOffset = expectedMessageLength - 2;
+        if (messageLength != expectedMessageLength || msg[3] > 0x0F)
+            continue;
+
+        bool dataBytesAre7Bit = true;
+        unsigned int checksum = 0;
+        for (size_t i = 8; i < checksumOffset; ++i) {
+            if (msg[i] > 0x7F) {
+                dataBytesAre7Bit = false;
+                break;
+            }
+            checksum += msg[i];
+        }
+        if (!dataBytesAre7Bit || msg[checksumOffset] != (checksum & 0x7F))
+            continue;
+
         juce::String name;
-        for (size_t i = 0; i < 12 && 8 + i < messageLength - 1; ++i) {
-            const auto character = msg[8 + i];
-            if (character < 32 || character > 126)
+        for (size_t i = 0; i < 12; ++i) {
+            const auto character = msg[8 + i * 2];
+            const auto highByte = msg[9 + i * 2];
+            if (character < 32 || character > 127 || highByte != 0)
                 break;
             name += juce::String::charToString(static_cast<juce::juce_wchar>(character));
-        }
-
-        if (name.length() < 2) {
-            name.clear();
-            for (size_t offset = 8; offset + 1 < 32 && offset + 1 < messageLength - 1;
-                 offset += 2) {
-                const auto character = msg[offset];
-                if (character < 32 || character > 126 || msg[offset + 1] != 0)
-                    break;
-                name += juce::String::charToString(static_cast<juce::juce_wchar>(character));
-            }
         }
 
         name = name.trim();

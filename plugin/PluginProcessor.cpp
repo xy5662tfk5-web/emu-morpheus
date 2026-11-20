@@ -81,12 +81,19 @@ int MorpheusLabAudioProcessor::getPresetCount() const {
     return presetNames.size();
 }
 
+int MorpheusLabAudioProcessor::getProgramNumber(int index) const {
+    if (index < 0 || index >= static_cast<int>(presetNumbers.size()))
+        return 0;
+    return presetNumbers[static_cast<size_t>(index)];
+}
+
 juce::String MorpheusLabAudioProcessor::getPresetBankStatus() const {
     return presetBankStatus;
 }
 
 bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
     presetNames.clear();
+    presetNumbers.clear();
     currentProgram.store(0);
 
     juce::MemoryBlock fileData;
@@ -99,8 +106,10 @@ bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
     const auto* bytes = static_cast<const std::uint8_t*>(fileData.getData());
     const auto parsed = morpheus::parsePresetBankSysEx(bytes, fileData.getSize());
 
-    for (const auto& preset : parsed.presets)
+    for (const auto& preset : parsed.presets) {
         presetNames.add(juce::String::fromUTF8(preset.name.c_str()));
+        presetNumbers.push_back(static_cast<int>(preset.number));
+    }
 
     if (presetNames.isEmpty()) {
         presetBankStatus = "No valid Morpheus presets ("

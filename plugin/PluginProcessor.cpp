@@ -119,15 +119,27 @@ bool MorpheusLabAudioProcessor::parsePresetBank(const juce::String& path) {
             || msg[4] != 0x01 || msg[5] != 0x01)
             continue;
 
+        // The Morpheus Operation Manual (SysEx reference, pp. 228-231)
+        // defines the preset name as 12 consecutive ASCII characters.
+        // Some archived dumps/tools expose a zero-padded two-byte variant,
+        // so accept that representation only as a fallback.
         juce::String name;
-        for (size_t offset = 8; offset + 1 < 32; offset += 2) {
-            const auto character = msg[offset];
-            const auto highByte = msg[offset + 1];
-            if (character == 0 || character < 32 || character > 126)
-                break;
-            if (highByte != 0)
+        for (size_t i = 0; i < 12 && 8 + i < messageLength - 1; ++i) {
+            const auto character = msg[8 + i];
+            if (character < 32 || character > 126)
                 break;
             name += juce::String::charToString(static_cast<juce::juce_wchar>(character));
+        }
+
+        if (name.length() < 2) {
+            name.clear();
+            for (size_t offset = 8; offset + 1 < 32 && offset + 1 < messageLength - 1;
+                 offset += 2) {
+                const auto character = msg[offset];
+                if (character < 32 || character > 126 || msg[offset + 1] != 0)
+                    break;
+                name += juce::String::charToString(static_cast<juce::juce_wchar>(character));
+            }
         }
 
         name = name.trim();

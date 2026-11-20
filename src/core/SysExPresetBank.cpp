@@ -28,6 +28,8 @@ bool isMorpheusPreset(const std::uint8_t* message, std::size_t length) {
 }
 
 bool hasValidDataAndChecksum(const std::uint8_t* message) {
+    if (message[6] > 0x7F || message[7] > 0x7F)
+        return false;
     unsigned int sum = 0;
     for (std::size_t i = kDataOffset; i < kChecksumOffset; ++i) {
         if (message[i] > 0x7F)

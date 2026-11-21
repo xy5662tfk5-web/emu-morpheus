@@ -61,6 +61,8 @@ if(APPLE)
     )
     FetchContent_MakeAvailable(JUCE)
 
+    juce_add_binary_data(MorpheusAssets SOURCES assets/morpheus_front_panel.svg)
+
     juce_add_plugin(MorpheusLab
         COMPANY_NAME "Open Research"
         BUNDLE_ID "org.openresearch.morpheuslab"
@@ -88,6 +90,7 @@ if(APPLE)
     )
     target_link_libraries(MorpheusLab PRIVATE
         morpheus_core
+        MorpheusAssets
         juce::juce_audio_utils
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

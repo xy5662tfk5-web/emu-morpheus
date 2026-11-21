@@ -2,10 +2,14 @@
 #include <BinaryData.h>
 
 namespace {
-const juce::Colour panelColour  { 0xff202833 };
-const juce::Colour lcdColour    { 0xffa8b99a };
-const juce::Colour lcdInk       { 0xff17251b };
-const juce::Colour accentColour { 0xffd6a65f };
+const juce::Colour backgroundColour { 0xff11161d };
+const juce::Colour panelColour      { 0xff202833 };
+const juce::Colour panelEdge        { 0xff526174 };
+const juce::Colour lcdColour        { 0xffa8b99a };
+const juce::Colour lcdInk           { 0xff17251b };
+const juce::Colour textColour       { 0xffe7edf5 };
+const juce::Colour mutedColour      { 0xff9aa9bc };
+const juce::Colour accentColour     { 0xffd6a65f };
 }
 
 MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
@@ -17,17 +21,8 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     if (svgXml != nullptr)
         frontPanel = juce::Drawable::createFromSVG(*svgXml);
 
-    title.setText("E-MU MORPHEUS LAB", juce::dontSendNotification);
-    title.setJustificationType(juce::Justification::centredLeft);
-    title.setFont(juce::Font(juce::FontOptions(22.0f, juce::Font::bold)));
-
-    subtitle.setText("MORPHEUS PRESET CONTROL  |  ROM FILE MANAGER",
-                     juce::dontSendNotification);
-    subtitle.setColour(juce::Label::textColourId, juce::Colour(0xff9aa9bc));
-    subtitle.setFont(juce::Font(juce::FontOptions(11.0f)));
-
     presetLabel.setText("PRESET BANK", juce::dontSendNotification);
-    presetLabel.setColour(juce::Label::textColourId, juce::Colour(0xffd8e1ed));
+    presetLabel.setColour(juce::Label::textColourId, textColour);
     presetLabel.setFont(juce::Font(juce::FontOptions(10.5f, juce::Font::bold)));
     addAndMakeVisible(presetLabel);
 
@@ -43,7 +38,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
 
     for (auto* button : { &previousButton, &nextButton }) {
         button->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff354252));
-        button->setColour(juce::TextButton::textColourOffId, juce::Colour(0xffe7edf5));
+        button->setColour(juce::TextButton::textColourOffId, textColour);
         addAndMakeVisible(*button);
     }
     previousButton.onClick = [this] { selectRelativePreset(-1); };
@@ -55,7 +50,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     addAndMakeVisible(lcdNumber);
 
     lcdName.setColour(juce::Label::textColourId, lcdInk);
-    lcdName.setFont(juce::Font(juce::FontOptions(23.0f, juce::Font::bold)));
+    lcdName.setFont(juce::Font(juce::FontOptions(25.0f, juce::Font::bold)));
     lcdName.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(lcdName);
 
@@ -64,20 +59,19 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     lcdHint.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::bold)));
     addAndMakeVisible(lcdHint);
 
-    editSectionLabel.setText("Z-PLANE  |  MORPHING FILTER", juce::dontSendNotification);
-    editSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
-    editSectionLabel.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
+    editSectionLabel.setText("Z-PLANE  /  SOUND EDIT", juce::dontSendNotification);
+    editSectionLabel.setColour(juce::Label::textColourId, textColour);
+    editSectionLabel.setFont(juce::Font(juce::FontOptions(13.0f, juce::Font::bold)));
     addAndMakeVisible(editSectionLabel);
 
-    editNotice.setText("FILTER CATALOG + DSP PENDING VALIDATION  •  UI PREVIEW",
+    editNotice.setText("CONTROL LAYOUT PREVIEW — PARAMETER MAP / DSP NOT CONNECTED",
                        juce::dontSendNotification);
     editNotice.setColour(juce::Label::textColourId, juce::Colour(0xffffc477));
     editNotice.setFont(juce::Font(juce::FontOptions(9.0f)));
     addAndMakeVisible(editNotice);
 
-    // UI placeholders only: actual Morpheus parameter names, ranges and filter
-    // algorithms must be validated against the hardware SysEx specification
-    // before these controls are connected to an audio engine.
+    // These are interface placeholders. They are not yet mapped to verified
+    // Morpheus SysEx parameters or a Z-Plane DSP implementation.
     const std::array<juce::String, 8> controlNames {
         "MORPH POS", "MORPH MOD", "MORPH RATE", "MORPH DEPTH",
         "AMP ATTACK", "AMP RELEASE", "LFO RATE", "OUTPUT LEVEL"
@@ -89,13 +83,13 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     for (size_t i = 0; i < editControls.size(); ++i) {
         auto& slider = editControls[i];
         slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 64, 18);
+        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
         slider.setRange(controlMins[i], controlMaxs[i], 0.001);
         slider.setValue(controlDefaults[i], juce::dontSendNotification);
         slider.setColour(juce::Slider::rotarySliderFillColourId, accentColour);
         slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff596779));
         slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xfff0d3a0));
-        slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffe7edf5));
+        slider.setColour(juce::Slider::textBoxTextColourId, textColour);
         slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff171b22));
         addAndMakeVisible(slider);
 
@@ -108,14 +102,14 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     }
 
     effectsSectionLabel.setText("POST-FILTER EFFECTS", juce::dontSendNotification);
-    effectsSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
-    effectsSectionLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
+    effectsSectionLabel.setColour(juce::Label::textColourId, textColour);
+    effectsSectionLabel.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
     addAndMakeVisible(effectsSectionLabel);
 
     const std::array<juce::String, 4> effectNames { "REVERB", "CHORUS", "DELAY", "DISTORTION" };
     for (size_t i = 0; i < effectToggles.size(); ++i) {
         effectToggles[i].setButtonText(effectNames[i]);
-        effectToggles[i].setColour(juce::ToggleButton::textColourId, juce::Colour(0xffd8e1ed));
+        effectToggles[i].setColour(juce::ToggleButton::textColourId, textColour);
         effectToggles[i].setColour(juce::ToggleButton::tickColourId, accentColour);
         addAndMakeVisible(effectToggles[i]);
     }
@@ -125,7 +119,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
         "Sound ROM 4", "Preset Bank (.syx)"
     };
     const juce::StringArray descriptions {
-        "Processor firmware image", "Sound memory image / socket 1",
+        "Firmware image — file selection only", "Sound memory image / socket 1",
         "Sound memory image / socket 2", "Sound memory image / socket 3",
         "Sound memory image / socket 4", "Morpheus SysEx preset bank"
     };
@@ -133,32 +127,35 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     for (int i = 0; i < slotCount; ++i) {
         auto* name = new juce::Label();
         name->setText(names[i], juce::dontSendNotification);
-        name->setFont(juce::Font(juce::FontOptions(14.0f, juce::Font::bold)));
+        name->setColour(juce::Label::textColourId, textColour);
+        name->setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
         addAndMakeVisible(name);
         slotNames.add(name);
 
         auto* info = new juce::Label();
         info->setText(descriptions[i], juce::dontSendNotification);
-        info->setColour(juce::Label::textColourId, juce::Colour(0xff9aa9bc));
-        info->setFont(juce::Font(juce::FontOptions(10.5f)));
+        info->setColour(juce::Label::textColourId, mutedColour);
+        info->setFont(juce::Font(juce::FontOptions(9.0f)));
         addAndMakeVisible(info);
         slotDescriptions.add(info);
 
         auto* path = new juce::Label();
         path->setText("No file selected", juce::dontSendNotification);
-        path->setColour(juce::Label::textColourId, juce::Colour(0xffd8e1ed));
-        path->setFont(juce::Font(juce::FontOptions(11.0f)));
+        path->setColour(juce::Label::textColourId, textColour);
+        path->setFont(juce::Font(juce::FontOptions(10.5f)));
         path->setMinimumHorizontalScale(0.7f);
         addAndMakeVisible(path);
         slotPaths.add(path);
 
         auto* status = new juce::Label();
         status->setJustificationType(juce::Justification::centredRight);
-        status->setFont(juce::Font(juce::FontOptions(10.5f)));
+        status->setFont(juce::Font(juce::FontOptions(9.5f)));
         addAndMakeVisible(status);
         slotStatuses.add(status);
 
-        auto* button = new juce::TextButton("Choose…");
+        auto* button = new juce::TextButton("BROWSE");
+        button->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff354252));
+        button->setColour(juce::TextButton::textColourOffId, textColour);
         button->onClick = [this, i] { chooseFileForSlot(i); };
         addAndMakeVisible(button);
         slotButtons.add(button);
@@ -166,14 +163,14 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
 
     footer.setText(processor.getPresetBankStatus(), juce::dontSendNotification);
     footer.setColour(juce::Label::textColourId, juce::Colour(0xffffc477));
-    footer.setFont(juce::Font(juce::FontOptions(10.5f)));
+    footer.setFont(juce::Font(juce::FontOptions(10.0f)));
     addAndMakeVisible(footer);
 
     refreshFileStatus();
     refreshPresetList();
     refreshDisplay();
     startTimerHz(10);
-    setSize(760, 850);
+    setSize(960, 1020);
 }
 
 void MorpheusLabAudioProcessorEditor::chooseFileForSlot(int slot) {
@@ -206,7 +203,7 @@ void MorpheusLabAudioProcessorEditor::refreshFileStatus() {
         if (path.isEmpty()) {
             slotPaths[i]->setText("No file selected", juce::dontSendNotification);
             slotStatuses[i]->setText("EMPTY", juce::dontSendNotification);
-            slotStatuses[i]->setColour(juce::Label::textColourId, juce::Colour(0xff8995a5));
+            slotStatuses[i]->setColour(juce::Label::textColourId, mutedColour);
             continue;
         }
 
@@ -251,7 +248,8 @@ void MorpheusLabAudioProcessorEditor::refreshDisplay() {
         ? "PRESET " + juce::String(processor.getProgramNumber(index)).paddedLeft('0', 3)
         : "PRESET ---", juce::dontSendNotification);
     lcdName.setText(hasPresets ? processor.getProgramName(index)
-                               : "NO PRESET BANK", juce::dontSendNotification);
+                               : "NO PRESET BANK LOADED",
+                    juce::dontSendNotification);
     presetSelector.setSelectedId(hasPresets ? index + 1 : 0,
                                  juce::dontSendNotification);
     previousButton.setEnabled(hasPresets && index > 0);
@@ -273,66 +271,79 @@ void MorpheusLabAudioProcessorEditor::timerCallback() {
 }
 
 void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
-    g.fillAll(juce::Colour(0xff171b22));
-    g.setColour(juce::Colour(0xff596779));
-    g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(8.0f), 10.0f, 1.0f);
+    g.fillAll(backgroundColour);
 
     if (frontPanel != nullptr)
         frontPanel->drawWithin(g, juce::Rectangle<float>(18.0f, 10.0f,
-            static_cast<float>(getWidth() - 36), 67.6f),
+            static_cast<float>(getWidth() - 36), 86.0f),
             juce::RectanglePlacement::stretchToFit, 1.0f);
 
-    g.setColour(panelColour);
-    g.fillRoundedRectangle(juce::Rectangle<float>(18.0f, 115.0f,
-        static_cast<float>(getWidth() - 36), 112.0f), 8.0f);
+    const auto panel = [&g](float x, float y, float w, float h, bool filled = true) {
+        const juce::Rectangle<float> r(x, y, w, h);
+        if (filled)
+            g.setColour(panelColour);
+        else
+            g.setColour(juce::Colours::transparentBlack);
+        if (filled)
+            g.fillRoundedRectangle(r, 8.0f);
+        g.setColour(panelEdge);
+        g.drawRoundedRectangle(r, 8.0f, 1.0f);
+    };
+
+    panel(18.0f, 110.0f, getWidth() - 36.0f, 52.0f);
+    panel(18.0f, 174.0f, getWidth() - 36.0f, 118.0f);
+    panel(18.0f, 304.0f, getWidth() - 36.0f, 274.0f);
+    panel(18.0f, 590.0f, getWidth() - 36.0f, 84.0f);
+    panel(18.0f, 686.0f, getWidth() - 36.0f, 306.0f);
+
     g.setColour(lcdColour);
-    g.fillRoundedRectangle(juce::Rectangle<float>(28.0f, 125.0f,
-        static_cast<float>(getWidth() - 56), 92.0f), 5.0f);
-    g.setColour(juce::Colour(0xff252e3a));
-    g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 240.0f,
-        static_cast<float>(getWidth() - 36), 278.0f), 8.0f, 1.0f);
-    g.setColour(juce::Colour(0xff202833));
-    g.fillRoundedRectangle(juce::Rectangle<float>(18.0f, 530.0f,
-        static_cast<float>(getWidth() - 36), 300.0f), 8.0f);
-    g.setColour(juce::Colour(0xff596779));
-    g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 530.0f,
-        static_cast<float>(getWidth() - 36), 300.0f), 8.0f, 1.0f);
+    g.fillRoundedRectangle(juce::Rectangle<float>(30.0f, 185.0f,
+        static_cast<float>(getWidth() - 60), 96.0f), 5.0f);
+    g.setColour(juce::Colour(0xff65775f));
+    g.drawRoundedRectangle(juce::Rectangle<float>(30.0f, 185.0f,
+        static_cast<float>(getWidth() - 60), 96.0f), 5.0f, 1.0f);
+
+    g.setColour(juce::Colour(0xff344253));
+    g.drawHorizontalLine(720, 30.0f, static_cast<float>(getWidth() - 30));
+    for (int i = 1; i < slotCount; ++i)
+        g.drawHorizontalLine(728 + i * 42, 30.0f, static_cast<float>(getWidth() - 30));
 }
 
 void MorpheusLabAudioProcessorEditor::resized() {
-    title.setBounds(24, 14, getWidth() - 48, 34);
-    subtitle.setBounds(25, 48, getWidth() - 50, 18);
-    presetLabel.setBounds(28, 81, 90, 24);
-    presetSelector.setBounds(122, 80, getWidth() - 146, 28);
+    const int width = getWidth();
 
-    lcdNumber.setBounds(43, 132, 180, 24);
-    lcdName.setBounds(43, 158, getWidth() - 86, 34);
-    lcdHint.setBounds(getWidth() - 235, 132, 180, 20);
-    previousButton.setBounds(30, 190, 105, 24);
-    nextButton.setBounds(142, 190, 105, 24);
+    presetLabel.setBounds(32, 123, 90, 24);
+    presetSelector.setBounds(126, 120, width - 370, 30);
+    previousButton.setBounds(width - 232, 120, 96, 30);
+    nextButton.setBounds(width - 128, 120, 96, 30);
 
-    editSectionLabel.setBounds(30, 246, 220, 20);
-    editNotice.setBounds(getWidth() - 380, 247, 345, 18);
-    const int controlWidth = (getWidth() - 76) / 4;
+    lcdNumber.setBounds(50, 194, 200, 24);
+    lcdName.setBounds(50, 222, width - 100, 40);
+    lcdHint.setBounds(width - 252, 192, 200, 18);
+
+    editSectionLabel.setBounds(32, 314, 250, 22);
+    editNotice.setBounds(width - 500, 316, 460, 18);
+    const int controlWidth = (width - 100) / 4;
     for (size_t i = 0; i < editControls.size(); ++i) {
         const int row = static_cast<int>(i / 4);
         const int column = static_cast<int>(i % 4);
-        const int x = 28 + column * controlWidth;
-        const int y = 272 + row * 112;
+        const int x = 30 + column * controlWidth;
+        const int y = 346 + row * 112;
         editLabels[i].setBounds(x, y, controlWidth - 8, 16);
-        editControls[i].setBounds(x + 8, y + 15, controlWidth - 24, 92);
+        editControls[i].setBounds(x + 12, y + 15, controlWidth - 32, 90);
     }
-    effectsSectionLabel.setBounds(30, 486, 90, 22);
+
+    effectsSectionLabel.setBounds(32, 600, 230, 24);
     for (size_t i = 0; i < effectToggles.size(); ++i)
-        effectToggles[i].setBounds(125 + static_cast<int>(i) * 145, 483, 135, 24);
+        effectToggles[i].setBounds(275 + static_cast<int>(i) * 155, 612, 140, 28);
 
     for (int i = 0; i < slotCount; ++i) {
-        const int y = 546 + i * 44;
-        slotNames[i]->setBounds(30, y, 145, 19);
-        slotDescriptions[i]->setBounds(30, y + 19, 145, 16);
-        slotPaths[i]->setBounds(185, y + 1, getWidth() - 370, 23);
-        slotStatuses[i]->setBounds(getWidth() - 178, y + 1, 112, 23);
-        slotButtons[i]->setBounds(getWidth() - 94, y, 72, 27);
+        const int y = 724 + i * 42;
+        slotNames[i]->setBounds(32, y, 145, 18);
+        slotDescriptions[i]->setBounds(32, y + 17, 185, 16);
+        slotPaths[i]->setBounds(225, y + 4, width - 520, 24);
+        slotStatuses[i]->setBounds(width - 282, y + 4, 150, 24);
+        slotButtons[i]->setBounds(width - 120, y + 2, 88, 27);
     }
-    footer.setBounds(25, 824, getWidth() - 50, 16);
+    footer.setBounds(28, 996, width - 56, 18);
 }

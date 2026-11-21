@@ -59,6 +59,59 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     lcdHint.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::bold)));
     addAndMakeVisible(lcdHint);
 
+    editSectionLabel.setText("EDIT  |  SYNTHESIS", juce::dontSendNotification);
+    editSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
+    editSectionLabel.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
+    addAndMakeVisible(editSectionLabel);
+
+    editNotice.setText("CONTROL SURFACE PREVIEW  •  AUDIO ENGINE NOT CONNECTED YET",
+                       juce::dontSendNotification);
+    editNotice.setColour(juce::Label::textColourId, juce::Colour(0xffffc477));
+    editNotice.setFont(juce::Font(juce::FontOptions(9.0f)));
+    addAndMakeVisible(editNotice);
+
+    const std::array<juce::String, 8> controlNames {
+        "FILTER FREQ", "RESONANCE", "ATTACK", "RELEASE",
+        "Z-PLANE X", "Z-PLANE Y", "Z MORPH", "LFO RATE"
+    };
+    const std::array<double, 8> controlDefaults { 8000.0, 0.15, 0.02, 0.35, 0.5, 0.5, 0.5, 2.0 };
+    const std::array<double, 8> controlMins { 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01 };
+    const std::array<double, 8> controlMaxs { 20000.0, 1.0, 10.0, 10.0, 1.0, 1.0, 1.0, 20.0 };
+
+    for (size_t i = 0; i < editControls.size(); ++i) {
+        auto& slider = editControls[i];
+        slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+        slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 64, 18);
+        slider.setRange(controlMins[i], controlMaxs[i], 0.001);
+        slider.setValue(controlDefaults[i], juce::dontSendNotification);
+        slider.setColour(juce::Slider::rotarySliderFillColourId, accentColour);
+        slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff596779));
+        slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xfff0d3a0));
+        slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffe7edf5));
+        slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff171b22));
+        addAndMakeVisible(slider);
+
+        auto& label = editLabels[i];
+        label.setText(controlNames[i], juce::dontSendNotification);
+        label.setJustificationType(juce::Justification::centred);
+        label.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
+        label.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::bold)));
+        addAndMakeVisible(label);
+    }
+
+    effectsSectionLabel.setText("EFFECTS", juce::dontSendNotification);
+    effectsSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
+    effectsSectionLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
+    addAndMakeVisible(effectsSectionLabel);
+
+    const std::array<juce::String, 4> effectNames { "REVERB", "CHORUS", "DELAY", "DISTORTION" };
+    for (size_t i = 0; i < effectToggles.size(); ++i) {
+        effectToggles[i].setButtonText(effectNames[i]);
+        effectToggles[i].setColour(juce::ToggleButton::textColourId, juce::Colour(0xffd8e1ed));
+        effectToggles[i].setColour(juce::ToggleButton::tickColourId, accentColour);
+        addAndMakeVisible(effectToggles[i]);
+    }
+
     const juce::StringArray names {
         "CPU Firmware", "Sound ROM 1", "Sound ROM 2", "Sound ROM 3",
         "Sound ROM 4", "Preset Bank (.syx)"
@@ -112,7 +165,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     refreshPresetList();
     refreshDisplay();
     startTimerHz(10);
-    setSize(700, 590);
+    setSize(760, 850);
 }
 
 void MorpheusLabAudioProcessorEditor::chooseFileForSlot(int slot) {
@@ -224,7 +277,13 @@ void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
         static_cast<float>(getWidth() - 56), 92.0f), 5.0f);
     g.setColour(juce::Colour(0xff252e3a));
     g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 240.0f,
-        static_cast<float>(getWidth() - 36), 326.0f), 8.0f, 1.0f);
+        static_cast<float>(getWidth() - 36), 278.0f), 8.0f, 1.0f);
+    g.setColour(juce::Colour(0xff202833));
+    g.fillRoundedRectangle(juce::Rectangle<float>(18.0f, 530.0f,
+        static_cast<float>(getWidth() - 36), 300.0f), 8.0f);
+    g.setColour(juce::Colour(0xff596779));
+    g.drawRoundedRectangle(juce::Rectangle<float>(18.0f, 530.0f,
+        static_cast<float>(getWidth() - 36), 300.0f), 8.0f, 1.0f);
 }
 
 void MorpheusLabAudioProcessorEditor::resized() {
@@ -239,13 +298,28 @@ void MorpheusLabAudioProcessorEditor::resized() {
     previousButton.setBounds(30, 190, 105, 24);
     nextButton.setBounds(142, 190, 105, 24);
 
+    editSectionLabel.setBounds(30, 246, 220, 20);
+    editNotice.setBounds(getWidth() - 380, 247, 345, 18);
+    const int controlWidth = (getWidth() - 76) / 4;
+    for (size_t i = 0; i < editControls.size(); ++i) {
+        const int row = static_cast<int>(i / 4);
+        const int column = static_cast<int>(i % 4);
+        const int x = 28 + column * controlWidth;
+        const int y = 272 + row * 112;
+        editLabels[i].setBounds(x, y, controlWidth - 8, 16);
+        editControls[i].setBounds(x + 8, y + 15, controlWidth - 24, 92);
+    }
+    effectsSectionLabel.setBounds(30, 486, 90, 22);
+    for (size_t i = 0; i < effectToggles.size(); ++i)
+        effectToggles[i].setBounds(125 + static_cast<int>(i) * 145, 483, 135, 24);
+
     for (int i = 0; i < slotCount; ++i) {
-        const int y = 254 + i * 49;
+        const int y = 546 + i * 44;
         slotNames[i]->setBounds(30, y, 145, 19);
         slotDescriptions[i]->setBounds(30, y + 19, 145, 16);
         slotPaths[i]->setBounds(185, y + 1, getWidth() - 370, 23);
         slotStatuses[i]->setBounds(getWidth() - 178, y + 1, 112, 23);
         slotButtons[i]->setBounds(getWidth() - 94, y, 72, 27);
     }
-    footer.setBounds(25, 568, getWidth() - 50, 16);
+    footer.setBounds(25, 824, getWidth() - 50, 16);
 }

@@ -18,7 +18,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
 
     // Invisible selector sits over the physical PRESET key; its popup is real.
     presetSelector.setAlpha(0.0f);
-    presetSelector.setTextWhenNothingSelected({});
+    presetSelector.setTextWhenNothingSelected(juce::String());
     presetSelector.onChange = [this] {
         const int selectedId = presetSelector.getSelectedId();
         if (selectedId > 0)
@@ -162,6 +162,6 @@ void MorpheusLabAudioProcessorEditor::resized() {
     place(dataEncoderButton,  887, 28, 56, 56);
 
     // Two dynamic rows in the 2 x 16 LCD.
-    place(lcdLine1, 439, 32, 192, 20);
-    place(lcdLine2, 439, 49, 192, 20);
+    place(lcdLine1, 439, 39, 192, 18);
+    place(lcdLine2, 439, 56, 192, 18);
 }

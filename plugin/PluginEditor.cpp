@@ -70,6 +70,9 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     editNotice.setFont(juce::Font(juce::FontOptions(9.0f)));
     addAndMakeVisible(editNotice);
 
+    // UI placeholders only: actual Morpheus parameter names, ranges and filter
+    // algorithms must be validated against the hardware SysEx specification
+    // before these controls are connected to an audio engine.
     const std::array<juce::String, 8> controlNames {
         "MORPH POS", "MORPH MOD", "MORPH RATE", "MORPH DEPTH",
         "AMP ATTACK", "AMP RELEASE", "LFO RATE", "OUTPUT LEVEL"

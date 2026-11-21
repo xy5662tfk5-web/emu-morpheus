@@ -59,24 +59,24 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     lcdHint.setFont(juce::Font(juce::FontOptions(9.0f, juce::Font::bold)));
     addAndMakeVisible(lcdHint);
 
-    editSectionLabel.setText("EDIT  |  SYNTHESIS", juce::dontSendNotification);
+    editSectionLabel.setText("Z-PLANE  |  MORPHING FILTER", juce::dontSendNotification);
     editSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
     editSectionLabel.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
     addAndMakeVisible(editSectionLabel);
 
-    editNotice.setText("CONTROL SURFACE PREVIEW  •  AUDIO ENGINE NOT CONNECTED YET",
+    editNotice.setText("FILTER CATALOG + DSP PENDING VALIDATION  •  UI PREVIEW",
                        juce::dontSendNotification);
     editNotice.setColour(juce::Label::textColourId, juce::Colour(0xffffc477));
     editNotice.setFont(juce::Font(juce::FontOptions(9.0f)));
     addAndMakeVisible(editNotice);
 
     const std::array<juce::String, 8> controlNames {
-        "FILTER FREQ", "RESONANCE", "ATTACK", "RELEASE",
-        "Z-PLANE X", "Z-PLANE Y", "Z MORPH", "LFO RATE"
+        "MORPH POS", "MORPH MOD", "MORPH RATE", "MORPH DEPTH",
+        "AMP ATTACK", "AMP RELEASE", "LFO RATE", "OUTPUT LEVEL"
     };
-    const std::array<double, 8> controlDefaults { 8000.0, 0.15, 0.02, 0.35, 0.5, 0.5, 0.5, 2.0 };
-    const std::array<double, 8> controlMins { 20.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01 };
-    const std::array<double, 8> controlMaxs { 20000.0, 1.0, 10.0, 10.0, 1.0, 1.0, 1.0, 20.0 };
+    const std::array<double, 8> controlDefaults { 0.5, 0.0, 1.0, 0.0, 0.02, 0.35, 2.0, 0.8 };
+    const std::array<double, 8> controlMins { 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01, 0.0 };
+    const std::array<double, 8> controlMaxs { 1.0, 1.0, 20.0, 1.0, 10.0, 10.0, 20.0, 1.0 };
 
     for (size_t i = 0; i < editControls.size(); ++i) {
         auto& slider = editControls[i];
@@ -99,7 +99,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
         addAndMakeVisible(label);
     }
 
-    effectsSectionLabel.setText("EFFECTS", juce::dontSendNotification);
+    effectsSectionLabel.setText("POST-FILTER EFFECTS", juce::dontSendNotification);
     effectsSectionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe7edf5));
     effectsSectionLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
     addAndMakeVisible(effectsSectionLabel);

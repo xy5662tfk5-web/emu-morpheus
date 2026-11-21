@@ -22,7 +22,7 @@ private:
 
     MorpheusLabAudioProcessor& processor;
     std::unique_ptr<juce::Drawable> frontPanel;
-    juce::Label title, subtitle, footer, presetLabel, lcdNumber, lcdName, lcdHint;
+    juce::Label footer, presetLabel, lcdNumber, lcdName, lcdHint;
     juce::ComboBox presetSelector;
     std::array<juce::Slider, 8> editControls;
     std::array<juce::Label, 8> editLabels;

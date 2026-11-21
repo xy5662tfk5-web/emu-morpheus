@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include <BinaryData.h>
 
 namespace {
 const juce::Colour panelColour  { 0xff202833 };
@@ -10,16 +11,20 @@ const juce::Colour accentColour { 0xffd6a65f };
 MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
     MorpheusLabAudioProcessor& p)
     : juce::AudioProcessorEditor(p), processor(p) {
+    auto svgXml = juce::XmlDocument::parse(
+        juce::String::fromUTF8(BinaryData::morpheus_front_panel_svg,
+                               BinaryData::morpheus_front_panel_svgSize));
+    if (svgXml != nullptr)
+        frontPanel = juce::Drawable::createFromSVG(*svgXml);
+
     title.setText("E-MU MORPHEUS LAB", juce::dontSendNotification);
     title.setJustificationType(juce::Justification::centredLeft);
     title.setFont(juce::Font(juce::FontOptions(22.0f, juce::Font::bold)));
-    addAndMakeVisible(title);
 
     subtitle.setText("MORPHEUS PRESET CONTROL  |  ROM FILE MANAGER",
                      juce::dontSendNotification);
     subtitle.setColour(juce::Label::textColourId, juce::Colour(0xff9aa9bc));
     subtitle.setFont(juce::Font(juce::FontOptions(11.0f)));
-    addAndMakeVisible(subtitle);
 
     presetLabel.setText("PRESET BANK", juce::dontSendNotification);
     presetLabel.setColour(juce::Label::textColourId, juce::Colour(0xffd8e1ed));
@@ -272,6 +277,11 @@ void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
     g.setColour(juce::Colour(0xff596779));
     g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(8.0f), 10.0f, 1.0f);
 
+    if (frontPanel != nullptr)
+        frontPanel->drawWithin(g, juce::Rectangle<float>(18.0f, 10.0f,
+            static_cast<float>(getWidth() - 36), 67.6f),
+            juce::RectanglePlacement::stretchToFit, 1.0f);
+
     g.setColour(panelColour);
     g.fillRoundedRectangle(juce::Rectangle<float>(18.0f, 115.0f,
         static_cast<float>(getWidth() - 36), 112.0f), 8.0f);
@@ -292,8 +302,8 @@ void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
 void MorpheusLabAudioProcessorEditor::resized() {
     title.setBounds(24, 14, getWidth() - 48, 34);
     subtitle.setBounds(25, 48, getWidth() - 50, 18);
-    presetLabel.setBounds(28, 75, 90, 24);
-    presetSelector.setBounds(122, 73, getWidth() - 146, 28);
+    presetLabel.setBounds(28, 81, 90, 24);
+    presetSelector.setBounds(122, 80, getWidth() - 146, 28);
 
     lcdNumber.setBounds(43, 132, 180, 24);
     lcdName.setBounds(43, 158, getWidth() - 86, 34);

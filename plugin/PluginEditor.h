@@ -21,6 +21,7 @@ private:
     void selectRelativePreset(int delta);
 
     MorpheusLabAudioProcessor& processor;
+    std::unique_ptr<juce::Drawable> frontPanel;
     juce::Label title, subtitle, footer, presetLabel, lcdNumber, lcdName, lcdHint;
     juce::ComboBox presetSelector;
     std::array<juce::Slider, 8> editControls;

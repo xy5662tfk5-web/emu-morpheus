@@ -61,6 +61,7 @@ MorpheusLabAudioProcessorEditor::MorpheusLabAudioProcessorEditor(
 
     refreshPresetList();
     refreshDisplay();
+    startTimerHz(10);
     setResizable(false, false);
     setSize(1200, 112);
 }
@@ -136,8 +137,10 @@ void MorpheusLabAudioProcessorEditor::paint(juce::Graphics& g) {
                                juce::RectanglePlacement::stretchToFit, 1.0f);
 
     // Dynamic text replaces the sample text in the SVG's LCD glass.
-    g.setColour(lcdFill);
-    g.fillRect(431, 34, 208, 44);
+    g.setGradientFill(juce::ColourGradient(
+        juce::Colour(0xff769c31), 0.0f, 36.0f,
+        juce::Colour(0xff5d7d23), 0.0f, 76.0f, false));
+    g.fillRect(433, 36, 204, 40);
 }
 
 void MorpheusLabAudioProcessorEditor::resized() {
